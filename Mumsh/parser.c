@@ -12,6 +12,13 @@
 COMMAND_T* ParseCmd(const char* cmd_line) {
     COMMAND_T* cmd = (COMMAND_T*)malloc(sizeof(COMMAND_T));
     cmd->parse_error = PARSE_OK;
+    
+    // check for empty cmd
+    if (strlen(cmd_line) == 0) {
+        cmd->parse_error = PARSE_EMPTY_COMMAND;
+        return cmd;
+    }
+    
     // make a copy of cmd_line, line will later be modified by strtok
     char* line = (char*)malloc(sizeof(char)*(strlen(cmd_line)+1));
     strcpy(line, cmd_line);
@@ -27,12 +34,6 @@ COMMAND_T* ParseCmd(const char* cmd_line) {
         arg_list_tmp[arg_list_count] = t;
         arg_list_count += 1;
         ttk = strtok(NULL, delim);
-    }
-    
-    // in fact, redirection could have error
-    // but to simplify, not considered
-    if (arg_list_count == 0) {
-        cmd->parse_error = PARSE_EMPTY_COMMAND;
     }
     
     int iter = 0;
@@ -86,7 +87,6 @@ COMMAND_T* ParseCmd(const char* cmd_line) {
         } else {
             // pass
         }
-        
         // clean temporary memory
         if (input_sign_pos<arg_list_count) {
             free(arg_list_tmp[input_sign_pos]);

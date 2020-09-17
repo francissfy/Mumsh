@@ -14,16 +14,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-/********************** global const ************************/
-
-
-// internal buffer size
-static const size_t MAX_BUFFER_SIZE = 1024*1024;
-
-
-// max size of a single cli input
-static const size_t MAX_CLI_LEN = 1024;
-
 
 /********************** global enum ************************/
 
@@ -39,23 +29,24 @@ typedef enum {
 
 // errors arose during parsing
 typedef enum {
+    PARSE_OK,
     PARSE_EMPTY_COMMAND,
-    PARSE_UNKNOW_ERROR,
-    PARSE_OK
+    PARSE_UNKNOW_ERROR
 } PARSE_ERROR_T;
 
 
 // errors arose during the exec stage
 typedef enum {
+    EXEC_OK,
     EXEC_PIPE_ERROR,
     EXEC_FILE_NOT_EXIST,
     EXEC_FILE_PERMISSION_DENY,
-    EXEC_LACK_INPUT,    // 1st cmd lack input
+    EXEC_BUFFER_OVERFLOW,
     EXEC_FORK_ERROR,
-    EXEC_CMD_NOT_FOUND,
+    EXEC_CHDIR_ERROR,
+    EXEC_CMD_PARSE_ERROR,
     EXEC_TOO_MANY_FILE_IO,
-    EXEC_UNKNOWN_ERROR,
-    EXEC_OK
+    EXEC_UNKNOWN_ERROR
 } EXEC_ERROR_T;
 
 

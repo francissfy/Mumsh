@@ -55,14 +55,17 @@ void PrintExecErrMsg(EXEC_ERROR_T err_code) {
         case EXEC_FILE_PERMISSION_DENY:
             printf("EXEC_FILE_PERMISSION_DENY");
             break;
-        case EXEC_LACK_INPUT:
-            printf("EXEC_LACK_INPUT");
+        case EXEC_BUFFER_OVERFLOW:
+            printf("EXEC_BUFFER_OVERFLOW");
             break;
         case EXEC_FORK_ERROR:
             printf("EXEC_FORK_ERROR");
             break;
-        case EXEC_CMD_NOT_FOUND:
-            printf("EXEC_CMD_NOT_FOUND");
+        case EXEC_CHDIR_ERROR:
+            printf("EXEC_CHDIR_ERROR");
+            break;
+        case EXEC_CMD_PARSE_ERROR:
+            printf("EXEC_CMD_PARSE_ERROR");
             break;
         case EXEC_TOO_MANY_FILE_IO:
             printf("EXEC_TOO_MANY_FILE_IO");

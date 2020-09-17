@@ -15,12 +15,12 @@
 #include "parser.h"
 #include "exec.h"
 
-
+static const size_t MAX_CLI_LEN = 1024;
 static char cli_input[MAX_CLI_LEN];
 
 
 int main(int argc, const char* argv[]) {
-    char line[] = "echo 123 | grep 1 | grep 1 | grep 1 >> 2.txt";
+    char line[] = "cd ~/ | pwd | ls";
     COMMAND_LIST_T* cmd_list = ParseInput(line);
     PrintCMDList(cmd_list);
     
