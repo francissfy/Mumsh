@@ -67,6 +67,12 @@ void PrintExecErrMsg(EXEC_ERROR_T err_code) {
         case EXEC_CMD_PARSE_ERROR:
             printf("EXEC_CMD_PARSE_ERROR");
             break;
+        case EXEC_COMMAND_NOT_FOUND:
+            printf("EXEC_COMMAND_NOT_FOUND");
+            break;
+        case EXEC_CANNOT_GET_HOME_DIR:
+            printf("EXEC_CANNOT_GET_HOME_DIR");
+            break;
         case EXEC_TOO_MANY_FILE_IO:
             printf("EXEC_TOO_MANY_FILE_IO");
             break;
