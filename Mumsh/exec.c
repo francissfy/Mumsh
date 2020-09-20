@@ -96,12 +96,6 @@ void signal_handler(int signal) {
 EXEC_ERROR_T ExecCmd(COMMAND_T* cmd, int* pre_fd, int* cur_fd) {
     EXEC_ERROR_T ret_code = EXEC_OK;
     
-    // check command valibility
-    if (cmd->io_input->file_count>1 || cmd->io_output->file_count>1) {
-        ret_code = EXEC_TOO_MANY_FILE_IO;
-        return ret_code;
-    }
-    
     // process cd cmd in main process
     if (strcmp(cmd->argv[0], "cd") == 0) {
         ret_code = cd(cmd->argv[1]);
@@ -123,17 +117,16 @@ EXEC_ERROR_T ExecCmd(COMMAND_T* cmd, int* pre_fd, int* cur_fd) {
             fin = pre_fd[0];
         } else {
             close(pre_fd[1]);
-            fin = open(cmd->io_input->file_list[0], O_RDONLY);
+            fin = open(cmd->io_input->file, O_RDONLY);
         }
         if (fin<0) {
-            fprintf(stderr, "ERROR: %s: file not exists!\n", cmd->io_input->file_list[0]);
+            fprintf(stderr, "ERROR: %s: file not exists!\n", cmd->io_input->file);
             ret_code = EXEC_FILE_NOT_EXIST;
             exit(ret_code);
         }
         dup2(fin, STDIN_FILENO);
         
         // config output io
-        assert(cmd->io_output->file_count <= 1);
         int fout = -1;
         if (cmd->io_output->io_type == STD_IO) {
             close(cur_fd[0]);
@@ -141,13 +134,13 @@ EXEC_ERROR_T ExecCmd(COMMAND_T* cmd, int* pre_fd, int* cur_fd) {
         } else {
             close(cur_fd[0]);
             if (cmd->io_output->io_type == FILE_IO) {
-                fout = open(cmd->io_output->file_list[0], O_CREAT | O_TRUNC | O_WRONLY, 0644);
+                fout = open(cmd->io_output->file, O_CREAT | O_TRUNC | O_WRONLY, 0644);
             } else {
-                fout = open(cmd->io_output->file_list[0], O_CREAT | O_APPEND | O_WRONLY, 0644);
+                fout = open(cmd->io_output->file, O_CREAT | O_APPEND | O_WRONLY, 0644);
             }
         }
         if (fout<0) {
-            fprintf(stderr, "ERROR: %s: permission denied!\n", cmd->io_output->file_list[0]);
+            fprintf(stderr, "ERROR: %s: permission denied!\n", cmd->io_output->file);
             ret_code = EXEC_FILE_PERMISSION_DENY;
             exit(ret_code);
         }

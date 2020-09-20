@@ -12,7 +12,7 @@
 #include "types.h"
 #include <string.h>
 
-COMMAND_T* ParseCmd(const char* cmd_line);
+COMMAND_T* ParseCmd(const char* line);
 
 COMMAND_LIST_T* ParseInput(const char* cmd_input);
 

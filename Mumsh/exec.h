@@ -14,9 +14,11 @@
 #include <fcntl.h>
 #include <string.h>
 #include <pwd.h>
+#include <signal.h>
+#include <sys/wait.h>
 
 static const size_t MAX_BUFFER_SIZE = 1024;
-static char buffer[MAX_BUFFER_SIZE];
+static char buffer[1024];
 
 EXEC_ERROR_T ExecCmd(COMMAND_T* cmd, int* pre_fd, int* cur_fd);
 

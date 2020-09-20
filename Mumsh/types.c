@@ -10,38 +10,48 @@
 
 void InitIOConfig(IO_CONFIG_T* io_config) {
     io_config->io_type = STD_IO;
-    io_config->file_count = 0;
-    io_config->file_list = NULL;
+    io_config->file = NULL;
 }
 
 void FreeIOConfig(IO_CONFIG_T* io_config) {
     if (io_config == NULL) {
         return;
     }
-    for (int i=0; i<io_config->file_count; i++) {
-        free(io_config->file_list[i]);
+    if (io_config->io_type != STD_IO) {
+        free(io_config->file);
     }
-    free(io_config->file_list);
+    free(io_config);
+}
+
+
+void InitCmd(COMMAND_T* cmd) {
+    cmd->argc = 0;
+    cmd->argv = NULL;
+    cmd->io_input = NULL;
+    cmd->io_output = NULL;
+    cmd->parse_error = PARSE_OK;
 }
 
 
 void FreeCmd(COMMAND_T* cmd) {
-    if (cmd == NULL || cmd->parse_error != PARSE_OK) {
+    if (cmd == NULL) {
         return;
     }
     for (int i=0; i<cmd->argc; i++) {
-        free((cmd->argv)[i]);
+        free(cmd->argv[i]);
     }
     free(cmd->argv);
     FreeIOConfig(cmd->io_input);
     FreeIOConfig(cmd->io_output);
+    free(cmd);
 }
 
 void FreeCmdList(COMMAND_LIST_T* cmd_list) {
     for (int i=0; i<cmd_list->cmd_count; i++) {
-        FreeCmd(cmd_list->cmd_list[i]); // last arg is NULL, no need to free
+        FreeCmd(cmd_list->cmd_list[i]);
     }
     free(cmd_list->cmd_list);
+    free(cmd_list);
 }
 
 void PrintExecErrMsg(EXEC_ERROR_T err_code) {
@@ -91,18 +101,15 @@ void PrintExecErrMsg(EXEC_ERROR_T err_code) {
 void PrintIO(IO_CONFIG_T* io_config) {
     printf("io type: ");
     if (io_config->io_type == STD_IO) {
-        printf("std_io");
+        printf("std_io\n");
     } else {
         if (io_config->io_type == FILE_IO) {
-            printf("file_io, count: %d, file : ", io_config->file_count);
+            printf("file_io ");
         } else if(io_config->io_type == FILE_APPD_IO) {
-            printf("file_append_io, count: %d, file: ", io_config->file_count);
+            printf("file_append_io ");
         }
-        for(int i=0; i<io_config->file_count; i++) {
-            printf("%s ", io_config->file_list[i]);
-        }
+        printf("file: %s\n", io_config->file);
     }
-    printf("\n");
 }
 
 

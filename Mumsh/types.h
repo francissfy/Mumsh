@@ -58,8 +58,9 @@ typedef enum {
 // the config of io, including destination/source, file name
 typedef struct {
     IO_TYPE_T io_type;
-    int file_count;
-    char** file_list;
+    // int file_count;
+    // char** file_list;
+    char* file;
 } IO_CONFIG_T;
 
 
@@ -87,6 +88,8 @@ typedef struct {
 void InitIOConfig(IO_CONFIG_T* io_config);
 
 void FreeIOConfig(IO_CONFIG_T* io_config);
+
+void InitCmd(COMMAND_T* cmd);
 
 void FreeCmd(COMMAND_T* cmd);
 
