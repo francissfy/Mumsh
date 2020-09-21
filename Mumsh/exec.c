@@ -77,7 +77,7 @@ EXEC_ERROR_T cd(char* path) {
         abs_path[s1] = '/';
         memcpy(abs_path+s1+1, path, s2+1);
     }
-    // printf("abs_path:\n%s\n", abs_path);
+    
     if (chdir(abs_path) != 0) {
         ret_code = EXEC_CHDIR_ERROR;
     }
@@ -85,28 +85,37 @@ EXEC_ERROR_T cd(char* path) {
     return ret_code;
 }
 
-void signal_handler(int signal) {
-    if (signal == SIGINT) {
-        fprintf(stderr, "SIGINT: signal interrupt!\n");
-        exit(-1);
-    }
-}
 
-
-EXEC_ERROR_T ExecCmd(COMMAND_T* cmd, int* pre_fd, int* cur_fd) {
+void ExecCmd(COMMAND_LIST_T* cmd_list, int** pipe_list) {
     EXEC_ERROR_T ret_code = EXEC_OK;
+    
+    if (cmd_list->cursor == cmd_list->cmd_count) {
+        return ;
+    }
+    COMMAND_T* cmd = cmd_list->cmd_list[cmd_list->cursor];
+    
+    int* pre_fd = pipe_list[cmd_list->cursor];
+    int* cur_fd = pipe_list[cmd_list->cursor+1];
+    
+    if (cmd->parse_error != PARSE_OK) {
+        ret_code = EXEC_CMD_PARSE_ERROR;
+        PrintExecErrMsg(ret_code);
+        return ;
+    }
     
     // process cd cmd in main process
     if (strcmp(cmd->argv[0], "cd") == 0) {
         ret_code = cd(cmd->argv[1]);
-        return ret_code;
+        PrintExecErrMsg(ret_code);
+        return ;
     }
     
     pid_t child_pid = fork();
     
     if (child_pid<0) {
         ret_code = EXEC_FORK_ERROR;
-        return ret_code;
+        PrintExecErrMsg(ret_code);
+        return ;
     } else if (child_pid==0) {
         // child process
         
@@ -162,15 +171,26 @@ EXEC_ERROR_T ExecCmd(COMMAND_T* cmd, int* pre_fd, int* cur_fd) {
         // parent process
         close(pre_fd[0]);
         close(pre_fd[1]);
-        // handle control c signal
-        // somehow meaningless
-        signal(SIGINT, signal_handler);
         
-        int tmp;
-        waitpid(child_pid, &tmp, 0);
-        ret_code = (EXEC_ERROR_T)WEXITSTATUS(tmp);
+        // fill pid
+        cmd->job_pid = child_pid;
+        
+        // launch next cmd before waitpid
+        cmd_list->cursor += 1;
+        ExecCmd(cmd_list, pipe_list);
+        
+        if (cmd_list->job_type == JOB_FOREGOUND) {
+            int tmp;
+            waitpid(child_pid, &tmp, 0);
+            ret_code = (EXEC_ERROR_T)WEXITSTATUS(tmp);
+        }
     }
-    return ret_code;
+    
+    // print out error message
+    if (ret_code != EXEC_OK) {
+        PrintExecErrMsg(ret_code);
+    }
+    return ;
 }
 
 
@@ -188,23 +208,15 @@ EXEC_ERROR_T ExecCmdList(COMMAND_LIST_T* cmd_list) {
     }
     
     if (ret_code == EXEC_OK) {
-        close(pipe_list[0][1]);
+        // close the read end of pipe1
+        // provide stdin to pipe
+        close(pipe_list[0][0]);
+        dup2(STDIN_FILENO, pipe_list[0][1]);
+        // close the write end of last pipe
         close(pipe_list[cmd_list->cmd_count][1]);
         dup2(STDOUT_FILENO, pipe_list[cmd_list->cmd_count][0]);
         
-        for (int i=0; i<cmd_list->cmd_count; i++) {
-            COMMAND_T* cmd = cmd_list->cmd_list[i];
-            if (cmd->parse_error != PARSE_OK) {
-                fprintf(stderr, "ERROR: command parsing error!\n");
-                ret_code = EXEC_CMD_PARSE_ERROR;
-                break;
-            }
-            ret_code = ExecCmd(cmd, pipe_list[i], pipe_list[i+1]);
-            if (ret_code != EXEC_OK) {
-                // error msg have been printed in ExecCmd
-                break;
-            }
-        }
+        ExecCmd(cmd_list, pipe_list);
     }
     
     for (int i=0; i<(cmd_list->cmd_count+1); i++) {

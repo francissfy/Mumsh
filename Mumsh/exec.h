@@ -20,7 +20,7 @@
 static const size_t MAX_BUFFER_SIZE = 1024;
 static char buffer[1024];
 
-EXEC_ERROR_T ExecCmd(COMMAND_T* cmd, int* pre_fd, int* cur_fd);
+void ExecCmd(COMMAND_LIST_T* cmd_list, int** pipe_list);
 
 EXEC_ERROR_T ExecCmdList(COMMAND_LIST_T* cmd_list);
 

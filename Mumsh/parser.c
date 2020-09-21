@@ -90,7 +90,22 @@ COMMAND_LIST_T* ParseInput(const char* cmd_input) {
     strcpy(line, cmd_input);
     // make a copy
     COMMAND_LIST_T* cmd_list = (COMMAND_LIST_T*)malloc(sizeof(COMMAND_LIST_T));
+    cmd_list->cmd_line = (char*)malloc(sizeof(char)*((int)strlen(cmd_input)+1));
+    memcpy(cmd_list->cmd_line, cmd_input, strlen(cmd_input)+1);
     
+    // whether the job is background
+    int i=(int)strlen(cmd_input)-1;
+    while (i>0 && line[i] == ' ') {
+        i--;
+    }
+    if (line[i] == '&') {
+        line[i] = '\0';
+        cmd_list->job_type = JOB_BACKGOUND;
+    } else {
+        cmd_list->job_type = JOB_FOREGOUND;
+    }
+    
+    // organize pipe
     int pipe_op_count = 0;
     for (int i=0; i<(int)strlen(line); i++) {
         pipe_op_count += (line[i] == '|');
@@ -113,5 +128,7 @@ COMMAND_LIST_T* ParseInput(const char* cmd_input) {
         iter = tmp+1;
     }
     free(line);
+    cmd_list->cursor = 0;
+    cmd_list->status = JOB_RUNNING;
     return cmd_list;
 }

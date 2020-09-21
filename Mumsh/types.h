@@ -13,7 +13,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <assert.h>
-
+#include <signal.h>
+#include <sys/types.h>
 
 /********************** global enum ************************/
 
@@ -51,6 +52,16 @@ typedef enum {
     EXEC_UNKNOWN_ERROR
 } EXEC_ERROR_T;
 
+typedef enum {
+    JOB_FOREGOUND,
+    JOB_BACKGOUND
+} JOB_TYPE_T;
+
+typedef enum {
+    JOB_RUNNING,
+    JOB_DONE
+} JOB_STATUS_T;
+
 
 /********************** global data structure ************************/
 
@@ -70,6 +81,7 @@ typedef struct {
     char** argv;
     IO_CONFIG_T* io_input;
     IO_CONFIG_T* io_output;
+    int job_pid;
     PARSE_ERROR_T parse_error;
 } COMMAND_T;
 
@@ -77,7 +89,12 @@ typedef struct {
 // type of a command pipeline
 typedef struct {
     int cmd_count;
+    int cursor;
     COMMAND_T** cmd_list;
+    // support backgound jobs
+    char* cmd_line;     // initial command line
+    JOB_TYPE_T job_type;     // job type
+    JOB_STATUS_T status;     // job running status
 } COMMAND_LIST_T;
 
 
@@ -104,5 +121,39 @@ void PrintIO(IO_CONFIG_T* io_config);
 void PrintCMD(COMMAND_T* cmd);
 
 void PrintCMDList(COMMAND_LIST_T* cmd_list);
+
+/********************** small tools ************************/
+
+typedef struct {
+    char stack[10];
+    int stack_count;
+} CHAR_STACK;
+
+int CharStackEmpty(CHAR_STACK* stack);
+
+char CharStackTop(CHAR_STACK* stack);
+
+char CharStackPop(CHAR_STACK* stack);
+
+void CharStackPush(CHAR_STACK* stack, char elem);
+
+// task manager
+typedef struct {
+    int pool_size;
+    int job_count;
+    COMMAND_LIST_T* cmd_queue[20];  // at most 10 cmd list on background
+} TASK_POOL_T;
+
+
+void InitTaskPool(TASK_POOL_T* task_pool);
+
+void AddTaskToPool(TASK_POOL_T* task_pool, COMMAND_LIST_T* job);
+
+void PrintBackgoundTopJobs(TASK_POOL_T* task_pool);
+
+void PrintJobs(TASK_POOL_T* task_pool);
+
+void FreePool(TASK_POOL_T* task_pool);
+
 
 #endif /* types_h */
