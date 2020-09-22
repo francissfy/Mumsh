@@ -135,6 +135,10 @@ int main() {
             c_tmp = getchar();
             if (c_tmp == '\n') {
                 // handle \n
+                if (nchars == 0) {
+                    PrintPrompt();
+                    continue;
+                }
                 if (check_quote_complete() && check_rdct_pipe_complete()) {
                     // exec cmd
                     rm_quotes();

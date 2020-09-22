@@ -106,7 +106,7 @@ void ExecCmd(COMMAND_LIST_T* cmd_list, int** pipe_list) {
     // process cd cmd in main process
     if (strcmp(cmd->argv[0], "cd") == 0) {
         ret_code = cd(cmd->argv[1]);
-        PrintExecErrMsg(ret_code);
+        // PrintExecErrMsg(ret_code);
         return ;
     }
     
