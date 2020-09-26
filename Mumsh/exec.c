@@ -99,7 +99,7 @@ void ExecCmd(COMMAND_LIST_T* cmd_list, int** pipe_list) {
     
     if (cmd->parse_error != PARSE_OK) {
         ret_code = EXEC_CMD_PARSE_ERROR;
-        PrintExecErrMsg(ret_code);
+        // PrintExecErrMsg(ret_code);
         return ;
     }
     
@@ -114,7 +114,7 @@ void ExecCmd(COMMAND_LIST_T* cmd_list, int** pipe_list) {
     
     if (child_pid<0) {
         ret_code = EXEC_FORK_ERROR;
-        PrintExecErrMsg(ret_code);
+        // PrintExecErrMsg(ret_code);
         return ;
     } else if (child_pid==0) {
         // child process
@@ -188,7 +188,7 @@ void ExecCmd(COMMAND_LIST_T* cmd_list, int** pipe_list) {
     
     // print out error message
     if (ret_code != EXEC_OK) {
-        PrintExecErrMsg(ret_code);
+        // PrintExecErrMsg(ret_code);
     }
     return ;
 }
