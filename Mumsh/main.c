@@ -14,6 +14,7 @@
 
 #include "parser.h"
 #include "exec.h"
+#include "syntax.h"
 
 
 static char cli_buffer[1024];
@@ -21,12 +22,10 @@ static int nchars = 0;
 TASK_POOL_T task_pool;
 
 
-
 void PrintPrompt(void) {
     printf("mumsh $ ");
     fflush(stdout);
 }
-
 
 // very strange way, use different handling function for SIGINT
 void signal_handler(int signal) {
@@ -38,15 +37,14 @@ void signal_handler(int signal) {
     }
 }
 
-
 void signal_handler_2(int signal) {
     if (signal == SIGINT) {
         printf("\n");
     }
 }
 
-
 // check whether redirection and pipe are complete
+// if previous redirection error, treat as complete
 int check_rdct_pipe_complete(void) {
     if (nchars == 0) {
         return 1;
@@ -56,8 +54,20 @@ int check_rdct_pipe_complete(void) {
     while (i>0 && cli_buffer[i] == ' ') {
         i--;
     }
-    if (cli_buffer[i] == '|' || cli_buffer[i] == '<' || cli_buffer[i] == '>') {
+    if (cli_buffer[i] == '|') {
         return 0;
+    }
+    if (cli_buffer[i] == '<') {
+        return SyntaxCheck_L(cli_buffer, i, 0) == -1;
+    }
+    if (cli_buffer[i] == '>') {
+        if (i>1 && cli_buffer[i-1] == '>') {
+            // >> trim two >> and do check
+            return SyntaxCheck_L(cli_buffer, i-1, 0);
+        } else {
+            // > trim one > and do check
+            return SyntaxCheck_L(cli_buffer, i, 0) == -1;
+        }
     }
     return 1;
 }
@@ -190,17 +200,23 @@ int main() {
             continue;
         }
         
-        COMMAND_LIST_T* cmd_list = ParseInput(cli_buffer);
-        // PrintCMDList(cmd_list);
-        ExecCmdList(cmd_list);
-        // PrintCMDList(cmd_list);
-        // PrintExecErrMsg(ret_code);
-        if (cmd_list->job_type == JOB_BACKGOUND) {
-            AddTaskToPool(&task_pool, cmd_list);
-            PrintBackgoundTopJobs(&task_pool);
-        } else {
-            FreeCmdList(cmd_list);
+        printf("%s\n", cli_buffer);
+        // syntax check
+        if (SyntaxChecker(cli_buffer, 1) == 0) {
+            // parse and exec
+            COMMAND_LIST_T* cmd_list = ParseInput(cli_buffer);
+            // PrintCMDList(cmd_list);
+            ExecCmdList(cmd_list);
+            // PrintCMDList(cmd_list);
+            // PrintExecErrMsg(ret_code);
+            if (cmd_list->job_type == JOB_BACKGOUND) {
+                AddTaskToPool(&task_pool, cmd_list);
+                PrintBackgoundTopJobs(&task_pool);
+            } else {
+                FreeCmdList(cmd_list);
+            }
         }
+        cli_buffer[0] = '\0';
         nchars = 0;
     }
     return 0;

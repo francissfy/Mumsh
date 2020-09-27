@@ -32,6 +32,7 @@ typedef enum {
 // errors arose during parsing
 typedef enum {
     PARSE_OK,
+    PARSE_DUP_REDIRECTION,
     PARSE_EMPTY_COMMAND,
     PARSE_UNKNOW_ERROR
 } PARSE_ERROR_T;

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		151D5041251F5497001DEEEA /* syntax.c in Sources */ = {isa = PBXBuildFile; fileRef = 151D5040251F5497001DEEEA /* syntax.c */; };
 		155336CA251248560011B0B4 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 155336C9251248560011B0B4 /* main.c */; };
 		155336D2251248770011B0B4 /* parser.c in Sources */ = {isa = PBXBuildFile; fileRef = 155336D1251248770011B0B4 /* parser.c */; };
 		155336D5251248A00011B0B4 /* types.c in Sources */ = {isa = PBXBuildFile; fileRef = 155336D4251248A00011B0B4 /* types.c */; };
@@ -26,6 +27,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		151D503F251F5497001DEEEA /* syntax.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = syntax.h; sourceTree = "<group>"; };
+		151D5040251F5497001DEEEA /* syntax.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = syntax.c; sourceTree = "<group>"; };
 		155336C6251248560011B0B4 /* Mumsh */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Mumsh; sourceTree = BUILT_PRODUCTS_DIR; };
 		155336C9251248560011B0B4 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		155336D0251248770011B0B4 /* parser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = parser.h; sourceTree = "<group>"; };
@@ -73,6 +76,8 @@
 				155336D0251248770011B0B4 /* parser.h */,
 				155336D4251248A00011B0B4 /* types.c */,
 				155336D3251248A00011B0B4 /* types.h */,
+				151D503F251F5497001DEEEA /* syntax.h */,
+				151D5040251F5497001DEEEA /* syntax.c */,
 			);
 			path = Mumsh;
 			sourceTree = "<group>";
@@ -135,6 +140,7 @@
 			files = (
 				155336D8251248CE0011B0B4 /* exec.c in Sources */,
 				155336D5251248A00011B0B4 /* types.c in Sources */,
+				151D5041251F5497001DEEEA /* syntax.c in Sources */,
 				155336D2251248770011B0B4 /* parser.c in Sources */,
 				155336CA251248560011B0B4 /* main.c in Sources */,
 			);

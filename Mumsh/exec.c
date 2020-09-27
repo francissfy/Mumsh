@@ -107,6 +107,9 @@ void ExecCmd(COMMAND_LIST_T* cmd_list, int** pipe_list) {
     if (strcmp(cmd->argv[0], "cd") == 0) {
         ret_code = cd(cmd->argv[1]);
         // PrintExecErrMsg(ret_code);
+        if (ret_code != EXEC_OK) {
+            fprintf(stderr, "%s: No such file or directory\n", cmd->argv[1]);
+        }
         return ;
     }
     
@@ -129,7 +132,7 @@ void ExecCmd(COMMAND_LIST_T* cmd_list, int** pipe_list) {
             fin = open(cmd->io_input->file, O_RDONLY);
         }
         if (fin<0) {
-            fprintf(stderr, "ERROR: %s: file not exists!\n", cmd->io_input->file);
+            fprintf(stderr, "%s: No such file or directory\n", cmd->io_input->file);
             ret_code = EXEC_FILE_NOT_EXIST;
             exit(ret_code);
         }
@@ -149,7 +152,7 @@ void ExecCmd(COMMAND_LIST_T* cmd_list, int** pipe_list) {
             }
         }
         if (fout<0) {
-            fprintf(stderr, "ERROR: %s: permission denied!\n", cmd->io_output->file);
+            fprintf(stderr, "%s: Permission denied\n", cmd->io_output->file);
             ret_code = EXEC_FILE_PERMISSION_DENY;
             exit(ret_code);
         }
@@ -164,7 +167,7 @@ void ExecCmd(COMMAND_LIST_T* cmd_list, int** pipe_list) {
         int err_code = execvp(cmd->argv[0], cmd->argv);
         if (err_code == -1) {
             ret_code = EXEC_COMMAND_NOT_FOUND;
-            fprintf(stderr, "ERROR: %s: command not found!\n", cmd->argv[0]);
+            fprintf(stderr, "%s: command not found\n", cmd->argv[0]);
             exit(ret_code);
         }
     } else {
