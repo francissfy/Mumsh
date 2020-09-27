@@ -226,14 +226,10 @@ void RefreshJobPool(TASK_POOL_T* task_pool) {
 }
 
 
-// [2] (32758) (32759) /bin/ls | cat &
+// [2] /bin/ls | cat &
 void PrintBackgoundTopJobs(TASK_POOL_T* task_pool) {
     COMMAND_LIST_T* job = task_pool->cmd_queue[task_pool->job_count-1];
-    printf("[%d] ", task_pool->job_count);
-    for (int j=0; j<job->cmd_count; j++) {
-        printf("(%d) ", job->cmd_list[j]->job_pid);
-    }
-    printf("%s\n", job->cmd_line);
+    printf("[%d] %s\n", task_pool->job_count, job->cmd_line);
 }
 
 

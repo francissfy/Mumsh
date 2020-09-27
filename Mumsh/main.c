@@ -94,9 +94,8 @@ int check_quote_complete(void) {
     return CharStackEmpty(&stack);
 }
 
-
 // remove the quotes in string
-void rm_quotes(void) {
+void rm_quotes_BK(void) {
     int cp_offset = 0;
     int scan_offset = 0;
     char quote = '\0';
@@ -151,17 +150,19 @@ int main() {
                 }
                 if (check_quote_complete() && check_rdct_pipe_complete()) {
                     // exec cmd
-                    rm_quotes();
-                    cli_buffer[nchars] = '\0';
+                    // rm_quotes();
+                    // cli_buffer[nchars] = '\0';
                     break;
-                } else if (!check_rdct_pipe_complete()){
-                    // pipe incomplete, ignore \n
-                    printf("> ");
-                    continue;
-                } else {
+                } else if (!check_quote_complete()) {
                     // quote incomplete
                     cli_buffer[nchars++] = '\n';
                     printf("> ");
+                    fflush(stdout);
+                    continue;
+                } else {
+                    // pipe incomplete, ignore \n
+                    printf("> ");
+                    fflush(stdout);
                     continue;
                 }
             } else if (c_tmp == EOF) {
@@ -200,11 +201,10 @@ int main() {
             continue;
         }
         
-        printf("%s\n", cli_buffer);
         // syntax check
         if (SyntaxChecker(cli_buffer, 1) == 0) {
             // parse and exec
-            COMMAND_LIST_T* cmd_list = ParseInput(cli_buffer);
+            COMMAND_LIST_T* cmd_list = Parse(cli_buffer);
             // PrintCMDList(cmd_list);
             ExecCmdList(cmd_list);
             // PrintCMDList(cmd_list);
@@ -216,7 +216,7 @@ int main() {
                 FreeCmdList(cmd_list);
             }
         }
-        cli_buffer[0] = '\0';
+        memset(cli_buffer, '\0', 1024);
         nchars = 0;
     }
     return 0;

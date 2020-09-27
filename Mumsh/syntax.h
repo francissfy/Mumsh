@@ -10,17 +10,21 @@
 #define syntax_h
 
 #include <stdio.h>
+#include <ctype.h>
 #include "types.h"
 #include "string.h"
 
 const char* TKHelper(const char* s, int* len);
 
-void FormatToBuffer(const char* line);
+void rm_quotes(char* line);
+
+void FormatToBuffer(const char* line, char* buffer, int* buffer_count);
 
 int SyntaxCheckerHelper(int buff_off_s, int buff_off_t, int prompt);
 
 int SyntaxChecker(const char* cmd_line, int prompt);
 
 int SyntaxCheck_L(const char* cmd_line, int len, int prompt);
+
 
 #endif /* syntax_h */

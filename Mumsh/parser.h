@@ -9,11 +9,13 @@
 #ifndef parser_h
 #define parser_h
 
-#include "types.h"
 #include <string.h>
 
-COMMAND_T* ParseCmd(const char* line);
 
-COMMAND_LIST_T* ParseInput(const char* cmd_input);
+#include "syntax.h"
+
+COMMAND_T* ParseSingleCmd(int buff_off_s, int buff_off_t);
+
+COMMAND_LIST_T* Parse(const char* cmd_line);
 
 #endif /* parser_h */

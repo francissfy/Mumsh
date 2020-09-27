@@ -1,6 +1,6 @@
 CC = clang
 CFLAGS = -std=gnu11 -O2 -Wall -Wextra -Werror -pedantic -Wno-unused-result
-MUMSH_SRC = exec.c main.c parser.c types.c
+MUMSH_SRC = exec.c main.c parser.c types.c syntax.c
 MUMSH = mumsh
 MUMSHMC_FLAGS = -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined -fsanitize=integer
 MUMSHMC = mumsh_memory_check

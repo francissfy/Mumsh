@@ -8,27 +8,82 @@
 
 #include "syntax.h"
 
-// can be used any where in syntax
-// 看我的骚操作
-char syntax_buffer[10*64];
+
+char syntax_buffer[64*64];
 int syntax_count = 0;
 
 
-// 分词小助手
+void rm_quotes(char* line) {
+    int cp_offset = 0;
+    int scan_offset = 0;
+    char quote = '\0';
+    while (scan_offset < (int)strlen(line)) {
+        char t = line[scan_offset];
+        if (t == '\'' || t == '\"') {
+            if (quote == '\0') {
+                // record and scan++
+                quote = t;
+            } else {
+                if (quote == t) {
+                    // encounter the same, not cp, reset quote_ptr
+                    quote = '\0';
+                } else {
+                    // not the same, cp
+                    if (scan_offset > cp_offset) {
+                        line[cp_offset++] = t;
+                    }
+                }
+            }
+        } else {
+            // cp
+            if (scan_offset > cp_offset) {
+                line[cp_offset] = t;
+            }
+            cp_offset++;
+        }
+        scan_offset += 1;
+    }
+    line[cp_offset] = '\0';
+}
+
+
+/*
+ Tokenizer helper
+ skip space and split to >>, >, <, |, word
+ split by space, >(till space or <, space), >>(at most 2),<, |
+ */
+
+// consider:
+// "echo" "<1.'txt'" >"2.""txt"
 const char* TKHelper(const char* s, int* len) {
     const char* iter = s;
     while (iter[0] == ' ' && iter[0] != '\0') {
         iter++;
     }
     int t=0;
-    if (iter[0] == '>' || iter[0] == '<') {
-        while (iter[t] == iter[0] && iter[t] != '\0' && t<2) {
+    
+    if (iter[0] == '>') {
+        // split >>|>
+        while (iter[t] == iter[0] && t<2) {
             t++;
         }
+    } else if (iter[0] == '<') {
+        t=1;
     } else if (iter[0] == '|') {
-        t = 1;
+        t=1;
+    } else if (iter[0] == '\'' || iter[0] == '\"') {
+        // compress connected strings lile "2.""txt"
+        while (iter[t] == '\'' || iter[t] == '\"') {
+            char tmp = iter[t];
+            t++;
+            while (iter[t] != tmp) {
+                t++;
+            }
+            t++;
+        }
     } else {
-        while (iter[t] != '>' && iter[t] != '<' && iter[t] != ' ' && iter[t] != '|' && iter[t] != '\0') {
+        while (iter[t] != ' ' && iter[t] != '<'
+               && iter[t] != '>' && iter[t] != '|' && iter[t] != '\0') {
             t++;
         }
     }
@@ -36,39 +91,75 @@ const char* TKHelper(const char* s, int* len) {
     return iter;
 }
 
-// format to buffer, with per 10 char offset
-void FormatToBuffer(const char* line) {
-    // clean buffer
-    memset(syntax_buffer, '\0', 10*64);
-    syntax_count = 0;
+
+/*
+ split the line in to sematic components
+ */
+void FormatToBuffer(const char* line, char* buffer, int* buffer_count) {
+    int print_cpmts = 0;
+    
     const char* iter = line;
     int len;
     while (*iter != '\0') {
         iter = TKHelper(iter, &len);
-        char* dest = syntax_buffer+syntax_count*10;
-        memcpy(dest, iter, sizeof(char)*len);
-        dest[len] = '\0';
-        syntax_count++;
-        iter += len;
+        if (len>0) {
+            char* dest = buffer+(*buffer_count)*64;
+            memcpy(dest, iter, sizeof(char)*len);
+            dest[len] = '\0';
+            (*buffer_count)++;
+            iter += len;
+        }
     }
     // print
-    // for (int i=0; i<syntax_count; i++) {
-    //     printf("%s\n", syntax_buffer+10*i);
-    // }
+    if (print_cpmts) {
+        for (int i=0; i<*buffer_count; i++) {
+            printf("%s\n", buffer+64*i);
+        }
+    }
 }
 
-int isValidFileName(const char* name) {
-    if (strlen(name) == 0) {
-        return 0;
+
+/*
+ cursor: point to the word of >>, > or <
+ dst: point to char*, the name of the file,
+    if no valid name is found, set to NULL and return -1
+ promt: whether print the error message
+ */
+int RedirectionExtractor(int* cursor, char** dst1, char** dst2, int prompt, const char* type) {
+    if (*cursor == syntax_count-1) {
+        if (prompt) {
+            fprintf(stderr, "unexpected EOL\n");
+        }
+        return -1;
     }
-    if (name[0] == '>' || name[0] == '<' || name[0] == '|') {
-        return 0;
+    *cursor = *cursor+1;
+    char* dest = syntax_buffer + (*cursor)*64;
+    rm_quotes(dest);
+    
+    // if ( isalpha(dest[0]) || isdigit(dest[0]) ) {
+    if ( dest[0] != '>' && dest[0] != '<'  && dest[0] != '|' ) {
+        if (*dst1 == NULL && *dst2 == NULL) {
+            *dst1 = dest;
+        } else {
+            if (prompt) {
+                fprintf(stderr, "error: duplicated %s redirection\n", type);
+            }
+            return -1;
+        }
+    } else {
+        if (prompt) {
+            fprintf(stderr, "syntax error near unexpected token `%c'\n", dest[0]);
+        }
+        return -1;
     }
-    return 1;
+    return 0;
 }
 
-// single cmd content
-// from buffer+10*buff_off_s to buffer+10*buff_off_t(both end included)
+
+/*
+ check for single command valibility
+ sematic component from buff_off_s to buff_off_t (both end included)
+ */
 int SyntaxCheckerHelper(int buff_off_s, int buff_off_t, int prompt) {
     int offset =  buff_off_s;
     
@@ -86,104 +177,18 @@ int SyntaxCheckerHelper(int buff_off_s, int buff_off_t, int prompt) {
     }
     
     while (offset<=buff_off_t) {
-        char* line = syntax_buffer+10*offset;
-        
+        char* line = syntax_buffer+64*offset;
         if (strcmp(line, ">>")==0) {
-            if (offset == syntax_count-1) {
-                // ">>" is at the end
-                if (prompt) {
-                    fprintf(stderr, "syntax error near unexpected token EOL\n");
-                }
+            if (RedirectionExtractor(&offset, &io_app_file, &io_out_file, prompt, "output") != 0) {
                 return -1;
-            } else if (offset == buff_off_t) {
-                // no name after >>
-                if (prompt) {
-                    fprintf(stderr, "syntax error near unexpected token `%c'\n", (line+10)[0]);
-                }
-                return -1;
-            } else {
-                // extract name
-                if (isValidFileName(line+10)) {
-                    if (io_out_file != NULL || io_app_file != NULL) {
-                        if (prompt) {
-                            fprintf(stderr, "duplicated output redirection\n");
-                        }
-                        return -1;
-                    } else {
-                        io_app_file = line+10;
-                        offset++;
-                    }
-                } else {
-                    if (prompt) {
-                        fprintf(stderr, "syntax error near unexpected token `%c'\n", (line+10)[0]);
-                    }
-                    return -1;
-                }
             }
         } else if (strcmp(line, ">") ==0) {
-            if (offset == syntax_count-1) {
-                // ">" is at the end
-                if (prompt) {
-                    fprintf(stderr, "syntax error near unexpected token EOL\n");
-                }
+            if (RedirectionExtractor(&offset, &io_out_file, &io_app_file, prompt, "output") != 0) {
                 return -1;
-            } else if (offset == buff_off_t) {
-                // no name after >
-                if (prompt) {
-                    fprintf(stderr, "syntax error near unexpected token `%c'\n", (line+10)[0]);
-                }
-                return -1;
-            } else {
-                // extract name
-                if (isValidFileName(line+10)) {
-                    if (io_out_file != NULL || io_app_file != NULL) {
-                        if (prompt) {
-                            fprintf(stderr, "duplicated output redirection\n");
-                        }
-                        return -1;
-                    } else {
-                        io_out_file = line+10;
-                        offset++;
-                    }
-                } else {
-                    if (prompt) {
-                        fprintf(stderr, "syntax error near unexpected token `%c'\n", (line+10)[0]);
-                    }
-                    return -1;
-                }
             }
         } else if (strcmp(line, "<") ==0) {
-            // common argv
-            if (offset == syntax_count-1) {
-                // ">" is at the end
-                if (prompt) {
-                    fprintf(stderr, "syntax error near unexpected token EOL\n");
-                }
+            if (RedirectionExtractor(&offset, &io_in_file, &io_in_file, prompt, "input") != 0) {
                 return -1;
-            } else if (offset == buff_off_t) {
-                // no name after >
-                if (prompt) {
-                    fprintf(stderr, "syntax error near unexpected token `%c'\n", (line+10)[0]);
-                }
-                return -1;
-            } else {
-                // extract name
-                if (isValidFileName(line+10)) {
-                    if (io_in_file != NULL) {
-                        if (prompt) {
-                            fprintf(stderr, "duplicated output redirection\n");
-                        }
-                        return -1;
-                    } else {
-                        io_in_file = line+10;
-                        offset++;
-                    }
-                } else {
-                    if (prompt) {
-                        fprintf(stderr, "syntax error near unexpected token `%c'\n", (line+10)[0]);
-                    }
-                    return -1;
-                }
             }
         } else {
             argv[argc++] = line;
@@ -214,15 +219,23 @@ int SyntaxCheckerHelper(int buff_off_s, int buff_off_t, int prompt) {
 }
 
 
+/*
+ check the valibility of the command line
+ */
 int SyntaxChecker(const char* cmd_line, int prompt) {
-    FormatToBuffer(cmd_line);
+    syntax_count = 0;
+    memset(syntax_buffer, '\0', 64*64);
+    // if background job, remove & sign
+    // make no difference, treat & as arguments
+    
+    FormatToBuffer(cmd_line, syntax_buffer, &syntax_count);
     if (syntax_count == 0) {
         fprintf(stderr, "error: missing program\n");
         return -1;
     }
     int offset_s = 0;
     for (int i=0; i<syntax_count; i++) {
-        char* line = syntax_buffer+10*i;
+        char* line = syntax_buffer+64*i;
         if (strcmp(line, "|") == 0) {
             if (i==0) {
                 fprintf(stderr, "error: missing program\n");
@@ -240,8 +253,13 @@ int SyntaxChecker(const char* cmd_line, int prompt) {
     return 0;
 }
 
-
+/*
+ plus an len parameter
+ */
 int SyntaxCheck_L(const char* cmd_line, int len, int prompt) {
+    if (len == 0) {
+        return 0;
+    }
     char* copy = (char*)malloc(sizeof(char)*(len+1));
     memcpy(copy, cmd_line, len+1);
     copy[len] = '\0';
