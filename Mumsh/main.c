@@ -14,7 +14,6 @@
 
 #include "parser.h"
 #include "exec.h"
-#include "syntax.h"
 
 
 static char cli_buffer[1024];
@@ -61,7 +60,7 @@ int check_rdct_pipe_complete(void) {
         return SyntaxCheck_L(cli_buffer, i, 0) == -1;
     }
     if (cli_buffer[i] == '>') {
-        if (i>1 && cli_buffer[i-1] == '>') {
+        if (i>=1 && cli_buffer[i-1] == '>') {
             // >> trim two >> and do check
             return SyntaxCheck_L(cli_buffer, i-1, 0);
         } else {

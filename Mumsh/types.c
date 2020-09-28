@@ -30,7 +30,6 @@ void InitCmd(COMMAND_T* cmd) {
     cmd->io_input = NULL;
     cmd->io_output = NULL;
     cmd->job_pid = 0;
-    cmd->parse_error = PARSE_OK;
 }
 
 
@@ -76,17 +75,11 @@ void PrintExecErrMsg(EXEC_ERROR_T err_code) {
         case EXEC_CHDIR_ERROR:
             printf("EXEC_CHDIR_ERROR");
             break;
-        case EXEC_CMD_PARSE_ERROR:
-            printf("EXEC_CMD_PARSE_ERROR");
-            break;
         case EXEC_COMMAND_NOT_FOUND:
             printf("EXEC_COMMAND_NOT_FOUND");
             break;
         case EXEC_CANNOT_GET_HOME_DIR:
             printf("EXEC_CANNOT_GET_HOME_DIR");
-            break;
-        case EXEC_TOO_MANY_FILE_IO:
-            printf("EXEC_TOO_MANY_FILE_IO");
             break;
         case EXEC_UNKNOWN_ERROR:
             printf("EXEC_UNKNOWN_ERROR");
@@ -116,10 +109,6 @@ void PrintIO(IO_CONFIG_T* io_config) {
 
 
 void PrintCMD(COMMAND_T* cmd) {
-    if(cmd->parse_error != PARSE_OK) {
-        printf("parsing error\n");
-        return;
-    }
     printf("args: ");
     for (int i=0; i<=cmd->argc; i++) {
         printf("%s, ", cmd->argv[i]);
@@ -208,7 +197,6 @@ void RefreshJobPool(TASK_POOL_T* task_pool) {
         int is_runnning = 0;
         for (int j=0; j<job->cmd_count; j++) {
             COMMAND_T* cmd = job->cmd_list[j];
-//            int code = kill(cmd->job_pid, 0);
             int code = waitpid(cmd->job_pid, NULL, WNOHANG);
             // code == pid if finished, other wise return 0
             if (code == 0) {

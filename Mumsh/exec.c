@@ -97,12 +97,6 @@ void ExecCmd(COMMAND_LIST_T* cmd_list, int** pipe_list) {
     int* pre_fd = pipe_list[cmd_list->cursor];
     int* cur_fd = pipe_list[cmd_list->cursor+1];
     
-    if (cmd->parse_error != PARSE_OK) {
-        ret_code = EXEC_CMD_PARSE_ERROR;
-        // PrintExecErrMsg(ret_code);
-        return ;
-    }
-    
     // process cd cmd in main process
     if (strcmp(cmd->argv[0], "cd") == 0) {
         ret_code = cd(cmd->argv[1]);
@@ -116,6 +110,7 @@ void ExecCmd(COMMAND_LIST_T* cmd_list, int** pipe_list) {
     pid_t child_pid = fork();
     
     if (child_pid<0) {
+        fprintf(stderr, "ERROR: fork: error!\n");
         ret_code = EXEC_FORK_ERROR;
         // PrintExecErrMsg(ret_code);
         return ;
@@ -189,10 +184,6 @@ void ExecCmd(COMMAND_LIST_T* cmd_list, int** pipe_list) {
         }
     }
     
-    // print out error message
-    if (ret_code != EXEC_OK) {
-        // PrintExecErrMsg(ret_code);
-    }
     return ;
 }
 
@@ -205,6 +196,7 @@ EXEC_ERROR_T ExecCmdList(COMMAND_LIST_T* cmd_list) {
         int* pipe_fd = (int*)malloc(sizeof(int)*2);
         
         if (pipe(pipe_fd)<0) {
+            fprintf(stderr, "ERROR: pipe: pipe error!\n");
             ret_code = EXEC_PIPE_ERROR;
         }
         pipe_list[i] = pipe_fd;

@@ -17,7 +17,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-/********************** global enum ************************/
+/********************** enum ************************/
 
 
 // the input/output type
@@ -27,15 +27,6 @@ typedef enum {
     FILE_IO,
     FILE_APPD_IO
 } IO_TYPE_T;
-
-
-// errors arose during parsing
-typedef enum {
-    PARSE_OK,
-    PARSE_DUP_REDIRECTION,
-    PARSE_EMPTY_COMMAND,
-    PARSE_UNKNOW_ERROR
-} PARSE_ERROR_T;
 
 
 // errors arose during the exec stage
@@ -48,11 +39,10 @@ typedef enum {
     EXEC_FORK_ERROR,
     EXEC_CHDIR_ERROR,
     EXEC_CANNOT_GET_HOME_DIR,
-    EXEC_CMD_PARSE_ERROR,
     EXEC_COMMAND_NOT_FOUND,
-    EXEC_TOO_MANY_FILE_IO,
     EXEC_UNKNOWN_ERROR
 } EXEC_ERROR_T;
+
 
 typedef enum {
     JOB_FOREGOUND,
@@ -71,8 +61,6 @@ typedef enum {
 // the config of io, including destination/source, file name
 typedef struct {
     IO_TYPE_T io_type;
-    // int file_count;
-    // char** file_list;
     char* file;
 } IO_CONFIG_T;
 
@@ -84,7 +72,6 @@ typedef struct {
     IO_CONFIG_T* io_input;
     IO_CONFIG_T* io_output;
     int job_pid;
-    PARSE_ERROR_T parse_error;
 } COMMAND_T;
 
 

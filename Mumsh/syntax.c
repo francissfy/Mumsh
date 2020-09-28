@@ -49,12 +49,9 @@ void rm_quotes(char* line) {
 
 /*
  Tokenizer helper
- skip space and split to >>, >, <, |, word
- split by space, >(till space or <, space), >>(at most 2),<, |
+ split string, '>', '>>', '<', '|' and space
+ combine adjacent strings into one string
  */
-
-// consider:
-// "echo" "<1.'txt'" >"2.""txt"
 const char* TKHelper(const char* s, int* len) {
     const char* iter = s;
     while (iter[0] == ' ' && iter[0] != '\0') {
@@ -96,7 +93,7 @@ const char* TKHelper(const char* s, int* len) {
  split the line in to sematic components
  */
 void FormatToBuffer(const char* line, char* buffer, int* buffer_count) {
-    int print_cpmts = 0;
+    int print_cpmts = 0;    // whether print out the splited componets
     
     const char* iter = line;
     int len;
@@ -121,9 +118,9 @@ void FormatToBuffer(const char* line, char* buffer, int* buffer_count) {
 
 /*
  cursor: point to the word of >>, > or <
- dst: point to char*, the name of the file,
-    if no valid name is found, set to NULL and return -1
  promt: whether print the error message
+ dst1,dst2, used to check duplicated error and pass the filename
+ return: 0 if valid, -1 if error happends
  */
 int RedirectionExtractor(int* cursor, char** dst1, char** dst2, int prompt, const char* type) {
     if (*cursor == syntax_count-1) {
@@ -202,14 +199,14 @@ int SyntaxCheckerHelper(int buff_off_s, int buff_off_t, int prompt) {
         return -1;
     }
     if (buff_off_t < syntax_count-1 && (io_out_file != NULL || io_app_file != NULL)) {
-        // check whether have out redirection
+        // check whether have duplicated output redirection with pipe
         if (prompt) {
             fprintf(stderr, "error: duplicated output redirection\n");
         }
         return -1;
     }
     if (buff_off_s>0 && io_in_file != NULL) {
-        // check whether have input redirection
+        // check whether have duplicated input redirection with pipe
         if (prompt) {
             fprintf(stderr, "error: duplicated input redirection\n");
         }
@@ -225,10 +222,21 @@ int SyntaxCheckerHelper(int buff_off_s, int buff_off_t, int prompt) {
 int SyntaxChecker(const char* cmd_line, int prompt) {
     syntax_count = 0;
     memset(syntax_buffer, '\0', 64*64);
-    // if background job, remove & sign
-    // make no difference, treat & as arguments
     
-    FormatToBuffer(cmd_line, syntax_buffer, &syntax_count);
+    // process & sign
+    char* line = (char*)malloc(sizeof(char)*(strlen(cmd_line)+1));
+    memcpy(line, cmd_line, strlen(cmd_line)+1);
+    int i=(int)strlen(line)-1;
+    while (i>0 && line[i] == ' ') {
+        i--;
+    }
+    
+    if (line[i] == '&') {
+        line[i] = '\0';
+    }
+    
+    FormatToBuffer(line, syntax_buffer, &syntax_count);
+    free(line);
     if (syntax_count == 0) {
         fprintf(stderr, "error: missing program\n");
         return -1;
@@ -252,6 +260,7 @@ int SyntaxChecker(const char* cmd_line, int prompt) {
     }
     return 0;
 }
+
 
 /*
  plus an len parameter

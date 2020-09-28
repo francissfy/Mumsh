@@ -11,12 +11,14 @@
 
 #include <stdio.h>
 #include <ctype.h>
+
 #include "types.h"
 #include "string.h"
 
-const char* TKHelper(const char* s, int* len);
 
 void rm_quotes(char* line);
+
+const char* TKHelper(const char* s, int* len);
 
 void FormatToBuffer(const char* line, char* buffer, int* buffer_count);
 
